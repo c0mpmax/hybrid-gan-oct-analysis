@@ -39,13 +39,13 @@ save_spektr_dir = SPEKTR_DIR
 folder_path = VALUE_DIR
 
 # ===== Delta grid =====
-numeric_array = np.linspace(0, 30, 50)
+numeric_array = np.linspace(0, 100, 2)
 plot_z = np.sort(numeric_array)
 plot_z = np.array(plot_z, dtype=np.float64)
 file_path = os.path.join(folder_path, "values_of_steps.txt")
+np.savetxt(file_path, numeric_array)
 
-print(plot_z)
-print(len(plot_z))
+print('values: ', plot_z)
 
 # ===== Sigmoid test grid =====
 x = np.linspace(0, 2, 10000)
@@ -58,14 +58,12 @@ n = df['n'].values.astype(float)
 
 # ===== Interpolate refractive index =====
 wl_new = np.linspace(wl.min(), wl.max(), 100 * len(wl))
-print(wl_new)
-print(len(wl_new))
+print('wavelength: ',wl_new)
 
 n_f = interp1d(wl, n, kind='cubic')
 n = n_f(wl_new)
 
-print(n)
-print(len(n))
+print('refractive_index: ', n)
 
 dn_dwl = np.gradient(n, wl_new)
 
@@ -79,7 +77,6 @@ ax.set_xlabel('λ, µm', fontsize=16)
 ax.set_ylabel('n(λ)', fontsize=16)
 ax.grid(True)
 fig.subplots_adjust(left=0.15, right=0.95, top=0.9, bottom=0.15)
-fig.savefig(os.path.join(BASE_DIR, "n_NBK7.pdf"), dpi=100, bbox_inches='tight', format='pdf')
 plt.show()
 
 # ===== Physical constants =====
@@ -90,7 +87,7 @@ omega = 2 * np.pi * f
 
 # ===== Phase derivative analysis =====
 real_dlambda = wl_new[1] - wl_new[0]
-print(real_dlambda)
+print('step for wavelength = ', real_dlambda)
 z_values = plot_z
 dlambda_max_list = []
 
@@ -134,7 +131,6 @@ plt.ylabel(r'$\delta\lambda$, µm', fontsize=13)
 plt.grid(True)
 plt.legend()
 plt.tight_layout()
-fig.savefig(os.path.join(BASE_DIR, "dlambda.pdf"), dpi=100, bbox_inches='tight', format='pdf')
 plt.show()
 
 # ===== Gaussian spectral envelope =====
@@ -157,7 +153,7 @@ plt.title('Gaussian over λ')
 plt.grid(True)
 plt.legend()
 plt.show()
-print(len(wl_new_g))
+
 
 # ===== Noise generation =====
 white = np.random.normal(0, 1, len(wl_new))
@@ -186,71 +182,52 @@ plt.grid(True)
 plt.tight_layout()
 plt.show()
 
-# ===== Noise FFT =====
-fft_white = np.fft.fft(white)
-fft_pink = np.fft.fft(pink_noise)
-freqs_fft = np.fft.fftfreq(len(wl_new), d=(freq[1] - freq[0]))
-
-mask = freqs_fft > 0
-freqs_fft = freqs_fft[mask]
-fft_white_mag = np.abs(fft_white[mask])
-fft_pink_mag = np.abs(fft_pink[mask])
-
-plt.figure(figsize=(8, 4))
-plt.plot(freqs_fft, fft_white_mag, color='gray', alpha=0.9, label='White FFT')
-plt.plot(freqs_fft, fft_pink_mag, color='red', alpha=0.8, label='Pink FFT')
-plt.xlabel("k, 1/µm")
-plt.ylabel("|F(k)|")
-plt.xlim(0, 7e-14)
-plt.legend()
-plt.grid(True, which='both', ls='--', alpha=0.6)
-plt.tight_layout()
-plt.show()
-
 # ===== Main spectral loop =====
 s_n_z_array = []
-s_total_array = []
-
+s_total_array = []  
 for z in plot_z:
-    # Build signal for given delta
     s_n_z_current = []
     for n_koef, wl_val, g_val in zip(n, wl_new, g_vals):
-        s_n_z = np.cos((((n_koef - 1) * 1 - z) * 2 * np.pi / wl_val))
+        s_n_z = np.cos((((n_koef-1)*1 - z)* 2*np.pi/wl_val)) #*g_val
         s_n_z_current.append(s_n_z)
 
-    s_total = np.sum(s_n_z_current)
+    s_total = np.sum(s_n_z_current)  
     s_total_array.append(s_total)
 
-    s_n_z_noisy = (s_n_z_current + (0.05 * pink_noise) + white) * g_vals
-    k_vals = 2 * np.pi / wl_new
+    #s_n_z_noisy = (s_n_z_current + (0.05 * pink_noise) + white)*g_vals
+    s_n_z_noisy = (s_n_z_current+ (0.05 * pink_noise) + white)*g_vals
+    k_vals = 2 * np.pi / wl_new 
+   
     omega_uniform = np.linspace(k_vals[0], k_vals[-1], len(wl_new))
-
     f_sn, s_fft_n = fft(omega_uniform, s_n_z_noisy)
     f_sn, s_fft_n_g = fft(omega_uniform, s_n_z_current)
-
     s_fft_n_g = np.abs(s_fft_n_g)
     s_fft_n = np.abs(s_fft_n)
 
     N = len(s_n_z_noisy)
     s_fft_n = s_fft_n / N
 
-    fig, ax = plt.subplots(figsize=(8, 3))
-    ax.plot(wl_new, s_n_z_noisy)
-    plt.close()
+    ####FOUR####
+    fig, ax = plt.subplots(figsize=(8, 6)) 
+    
+    ax.plot(f_sn, s_fft_n) # - FOURIER
 
-    fig, ax = plt.subplots(figsize=(8, 6))
-    ax.plot(f_sn, s_fft_n)
-    ax.set_xlim(-4, 4)
     ax.set_title(f"Δ = {round(z)} µm", fontname='Times New Roman')
+    ax.set_xlim(-100, 100)
     ax.grid(True)
-
+    
     plot_filename = f'1D-Spektr-[{z}].pdf'
     plot_filepath = os.path.join(save_spektr_dir, plot_filename)
+    plt.show() 
+    plt.savefig(plot_filepath, dpi=100, bbox_inches='tight', format='pdf')
 
     file_name = f'1D-Spektr-[{z}].txt'
     file_path = os.path.join(save_spektr_dir, file_name)
-
+    np.savetxt(file_path, s_n_z_current)
+    
     s_n_z_array.extend(s_n_z_current)
+
+
 
 
 
