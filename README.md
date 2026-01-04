@@ -1,5 +1,5 @@
 # hybrid-gan-oct-analysis
-Project based on Master's Thesis: «Integrating Deterministic Models into GAN Pipelines for OCT Signal Analysis»
+Project based on my Master's Thesis: «Integrating Deterministic Models into GAN Pipelines for OCT Signal Analysis»
 
 
 This repository implements a hybrid pipeline of physics + machine-learning for reconstructing a physical parameter (Δ, optical path shift) from interferometric spectra.
@@ -12,7 +12,14 @@ A purely ML-based approach to spectral inversion is very sensitive to changes in
 
 By embedding real physics into the training loop, the network is constrained to learn only physically valid mappings, making it robust to system changes.
 
-![Schema for hybrid Algorithm](pictures/Schema.png)
+
+<p align="center">
+  <img src="pictures/Schema.png" width="600">
+</p>
+
+<p align="center">
+  <em>Figure 1 - Schema for hybrid Algorithm</em>
+</p>
 
 ## Method:
 
@@ -54,10 +61,27 @@ python validate.py
 
 ## Results:
 
-![Simulation of an interferometer signal with noise](pictures/signal.png)
+<p align="center">
+  <img src="pictures/signal.PNG" width="800">
+</p>
 
+<p align="center">
+  <em>Figure 2 — Simulated OCT interferometer signal with pink + white noise</em>
+</p>
 
-![Transformation of a simulated signal into a spectrum using the Fourier transform](pictures/spectra.png)
+<p align="center">
+  <img src="pictures/spectra.png" width="800">
+</p>
 
+<p align="center">
+  <em>Figure 3 — Transformation of a simulated signal into a spectrum using the Fourier transform</em>
+</p>
 
-![The result of training the CNN-network in a loop with a physical spectrum generator](pictures/prediction_results.png)
+<p align="center">
+  <img src="pictures/prediction_results.PNG" width="800">
+</p>
+
+<p align="center">
+  <em>Figure 4 — The result of training the CNN-network in a loop with a physical spectrum generator</em>
+</p>
+
